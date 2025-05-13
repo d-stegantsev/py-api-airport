@@ -21,60 +21,71 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         return super().validate(attrs)
 
 
+class PasswordConfirmationMixin(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True,
+        validators=[validate_password]
+    )
+    password2 = serializers.CharField(
+        write_only=True,
+        label=_("Confirm password")
+    )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        password = attrs.get("password")
+        password2 = attrs.get("password2")
+        if (password or password2) and password != password2:
+            raise serializers.ValidationError({
+                "password": _("Error: Passwords don't match."),
+                "password2": _("Error: Passwords don't match."),
+            })
+        return attrs
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("email",)
+        fields = ("email", "first_name", "last_name", "phone_number", "date_of_birth")
 
 
-class UserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
-    password2 = serializers.CharField(write_only=True, label=_("Confirm password"))
-
+class UserCreateSerializer(PasswordConfirmationMixin,
+                           serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "password", "password2"]
-        extra_kwargs = {"password": {"write_only": True}, "password2": {"write_only": True}}
-
-    def validate(self, attrs):
-        password = attrs["password"]
-        password2 = attrs["password2"]
-
-        if password != password2:
-            raise serializers.ValidationError(
-                {
-                    "password": "Error: Passwords don't match.",
-                    "password2": "Error: Passwords don't match.",
-                },
-            )
-        try:
-            validate_password(password)
-        except ValidationError as e:
-            raise serializers.ValidationError({"password": e.messages})
-
-        return attrs
+        fields = ("email", "password", "password2", "first_name", "last_name", "phone_number", "date_of_birth")
 
     def create(self, validated_data):
         validated_data.pop("password2", None)
         return User.objects.create_user(**validated_data)
 
-class UserUpdateSerializer(serializers.ModelSerializer):
+
+class UserUpdateSerializer(PasswordConfirmationMixin,
+                           serializers.ModelSerializer):
+    email = serializers.EmailField(read_only=True)
     password = serializers.CharField(
         write_only=True,
         validators=[validate_password],
+        required=False
+    )
+    password2 = serializers.CharField(
+        write_only=True,
+        label=_("Confirm password"),
+        required=False
     )
 
     class Meta:
         model = User
-        fields = ("email", "password")
+        fields = ("email", "password", "password2", "first_name", "last_name", "phone_number", "date_of_birth")
 
     def update(self, instance, validated_data):
-        if password := validated_data.pop("password"):
-            instance.set_password(password)
+        validated_data.pop("password2", None)
+        new_password = validated_data.pop("password", None)
+        if new_password:
+            instance.set_password(new_password)
 
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
         instance.save()
-
         return instance

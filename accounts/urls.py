@@ -7,7 +7,7 @@ from accounts.views import EmailTokenObtainPairView, UserViewSet
 app_name = "accounts"
 
 router = DefaultRouter()
-router.register("accounts", UserViewSet, basename="account")
+router.register("", UserViewSet, basename="account")
 
 urlpatterns = [
     path("", include(router.urls)),

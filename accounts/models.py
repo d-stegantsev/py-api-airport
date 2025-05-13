@@ -3,10 +3,10 @@ from django.db import models
 from django.utils.translation import gettext as _
 
 from base.managers import UserManager
-from base.models import UUIDBaseModel
+from base.models import TimestampedUUIDBaseModel
 
 
-class User(UUIDBaseModel, AbstractUser):
+class User(TimestampedUUIDBaseModel, AbstractUser):
     username = None
     email = models.EmailField(_("email address"), unique=True)
 

@@ -24,7 +24,7 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = "email"
+        fields = ("email",)
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -34,6 +34,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "password", "password2"]
+        extra_kwargs = {"password": {"write_only": True}, "password2": {"write_only": True}}
 
     def validate(self, attrs):
         password = attrs["password"]
@@ -51,7 +52,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         except ValidationError as e:
             raise serializers.ValidationError({"password": e.messages})
 
+        return attrs
+
     def create(self, validated_data):
+        validated_data.pop("password2", None)
         return User.objects.create_user(**validated_data)
 
 class UserUpdateSerializer(serializers.ModelSerializer):

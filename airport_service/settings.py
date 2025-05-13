@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_spectacular",
     "debug_toolbar",
+    "phonenumber_field",
 # local
     "accounts",
     "airport",

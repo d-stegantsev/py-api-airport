@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.utils.translation import gettext as _
 
 
 User = get_user_model()
@@ -28,7 +26,7 @@ class PasswordConfirmationMixin(serializers.Serializer):
     )
     password2 = serializers.CharField(
         write_only=True,
-        label=_("Confirm password")
+        label="Confirm password"
     )
 
     def validate(self, attrs):
@@ -37,8 +35,8 @@ class PasswordConfirmationMixin(serializers.Serializer):
         password2 = attrs.get("password2")
         if (password or password2) and password != password2:
             raise serializers.ValidationError({
-                "password": _("Error: Passwords don't match."),
-                "password2": _("Error: Passwords don't match."),
+                "password": "Error: Passwords don't match.",
+                "password2": "Error: Passwords don't match.",
             })
         return attrs
 
@@ -70,7 +68,7 @@ class UserUpdateSerializer(PasswordConfirmationMixin,
     )
     password2 = serializers.CharField(
         write_only=True,
-        label=_("Confirm password"),
+        label="Confirm password",
         required=False
     )
 

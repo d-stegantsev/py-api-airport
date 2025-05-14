@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import (
+from airport.models import (
     Airport, Route, AirplaneType, Airplane, Crew,
     Flight, Order, SeatClass, Seat, Ticket
 )

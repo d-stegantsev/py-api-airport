@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "debug_toolbar",
     "phonenumber_field",
+    "django_filters",
 # local
     "accounts",
     "airport",

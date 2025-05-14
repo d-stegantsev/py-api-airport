@@ -13,6 +13,7 @@ from accounts.serializers import (
     UserUpdateSerializer,
     ChangePasswordSerializer,
 )
+from accounts.throttles import TokenRateThrottle, SignupRateThrottle
 from base.mixins import BaseViewSetMixin
 
 User = get_user_model()
@@ -21,19 +22,21 @@ User = get_user_model()
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
     permission_classes = (AllowAny,)
+    throttle_classes = [TokenRateThrottle]
 
 
 class UserViewSet(BaseViewSetMixin, ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
+    throttle_classes = [SignupRateThrottle],
 
     action_serializers = {
         "create": UserCreateSerializer,
         "retrieve": UserSerializer,
         "update": UserUpdateSerializer,
         "partial_update": UserUpdateSerializer,
-        "registration": UserCreateSerializer,
+        "signup": UserCreateSerializer,
         "me": UserUpdateSerializer,
         "password": ChangePasswordSerializer,
     }
@@ -43,7 +46,7 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
         "update": [IsAdminUser],
         "partial_update": [IsAdminUser],
         "destroy": [IsAdminUser],
-        "registration": [AllowAny],
+        "signup": [AllowAny],
         "me": [IsAuthenticated],
         "password": [IsAuthenticated],
     }
@@ -58,8 +61,8 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
             serializer.save()
         return Response(serializer.data)
 
-    @action(detail=False, methods=["post"], url_path="registration")
-    def registration(self, request):
+    @action(detail=False, methods=["post"], url_path="signup")
+    def signup(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()

@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from accounts.serializers import (
     EmailTokenObtainPairSerializer,
@@ -19,17 +20,29 @@ from base.mixins import BaseViewSetMixin
 User = get_user_model()
 
 
+@extend_schema(
+    summary="Obtain JWT token pair",
+    description="Generate access and refresh JWT tokens by providing email and password.",
+    request=EmailTokenObtainPairSerializer,
+    responses={200: OpenApiResponse(description="Access and refresh tokens")},
+)
 class EmailTokenObtainPairView(TokenObtainPairView):
+    """
+    Endpoint for user authentication and JWT token generation.
+    """
     serializer_class = EmailTokenObtainPairSerializer
     permission_classes = (AllowAny,)
     throttle_classes = [TokenRateThrottle]
 
 
 class UserViewSet(BaseViewSetMixin, ModelViewSet):
+    """
+    A viewset for user account management, including signup, profile retrieval/update, and password change.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
-    throttle_classes = [SignupRateThrottle],
+    throttle_classes = [SignupRateThrottle]
 
     action_serializers = {
         "create": UserCreateSerializer,
@@ -51,6 +64,12 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
         "password": [IsAuthenticated],
     }
 
+    @extend_schema(
+        summary="Retrieve or update own profile",
+        description="GET retrieves the authenticated user profile; PATCH updates first name, last name, phone number, and date of birth.",
+        request=UserUpdateSerializer,
+        responses={200: UserSerializer},
+    )
     @action(detail=False, methods=["get", "patch"], url_path="me")
     def me(self, request):
         if request.method == "GET":
@@ -61,13 +80,25 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
             serializer.save()
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="User signup",
+        description="Register a new user by providing email, password, password confirmation, first name, last name, phone number, and date of birth.",
+        request=UserCreateSerializer,
+        responses={201: UserSerializer},
+    )
     @action(detail=False, methods=["post"], url_path="signup")
     def signup(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user = serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        summary="Change password",
+        description="Change the password of the authenticated user. Requires old_password, new_password, and new_password2 for confirmation.",
+        request=ChangePasswordSerializer,
+        responses={200: OpenApiResponse(description="Password updated successfully")},
+    )
     @action(detail=False, methods=["post"], url_path="password")
     def password(self, request):
         serializer = self.get_serializer(data=request.data, context={"request": request})

@@ -46,19 +46,20 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
 
     action_serializers = {
         "create": UserCreateSerializer,
-        "retrieve": UserSerializer,
         "update": UserUpdateSerializer,
         "partial_update": UserUpdateSerializer,
+        "retrieve": UserSerializer,
         "signup": UserCreateSerializer,
         "me": UserUpdateSerializer,
         "password": ChangePasswordSerializer,
     }
     action_permissions = {
         "create": [IsAdminUser],
-        "list": [IsAdminUser],
         "update": [IsAdminUser],
         "partial_update": [IsAdminUser],
         "destroy": [IsAdminUser],
+        "list": [IsAdminUser],
+        "retrieve": [IsAdminUser],
         "signup": [AllowAny],
         "me": [IsAuthenticated],
         "password": [IsAuthenticated],

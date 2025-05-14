@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from base.models import TimestampedUUIDBaseModel
 
@@ -31,6 +32,8 @@ class Route(TimestampedUUIDBaseModel):
 
 class AirplaneType(TimestampedUUIDBaseModel):
     name = models.CharField(max_length=100)
+    rows = models.PositiveIntegerField()
+    seats_in_row = models.PositiveIntegerField()
 
     def __str__(self):
         return self.name
@@ -38,8 +41,6 @@ class AirplaneType(TimestampedUUIDBaseModel):
 
 class Airplane(TimestampedUUIDBaseModel):
     name = models.CharField(max_length=100)
-    rows = models.PositiveIntegerField()
-    seats_in_row = models.PositiveIntegerField()
     airplane_type = models.ForeignKey(
         AirplaneType,
         on_delete=models.PROTECT,
@@ -91,12 +92,49 @@ class Order(TimestampedUUIDBaseModel):
         return f"Order {self.id} by {self.user}"
 
 
-class Ticket(TimestampedUUIDBaseModel):
+class SeatClass(TimestampedUUIDBaseModel):
+    """
+    Represents seat travel classes (e.g., Economy, Business, First).
+    """
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Seat(models.Model):
+    """
+    Defines a seat template for each AirplaneType.
+    """
+    airplane_type = models.ForeignKey(
+        AirplaneType,
+        on_delete=models.CASCADE,
+        related_name="seat_templates"
+    )
     row = models.PositiveIntegerField()
-    seat = models.PositiveIntegerField()
+    seat = models.CharField(max_length=1)
+    seat_class = models.ForeignKey(
+        SeatClass,
+        on_delete=models.PROTECT,
+        related_name="seat_templates"
+    )
+
+    class Meta:
+        unique_together = (("airplane_type", "row", "seat"),)
+
+    def __str__(self):
+        return f"{self.airplane_type} row {self.row} seat {self.seat} ({self.seat_class})"
+
+
+class Ticket(TimestampedUUIDBaseModel):
     flight = models.ForeignKey(
         Flight,
         on_delete=models.CASCADE,
+        related_name="tickets"
+    )
+    seat = models.ForeignKey(
+        Seat,
+        on_delete=models.PROTECT,
         related_name="tickets"
     )
     order = models.ForeignKey(
@@ -106,7 +144,12 @@ class Ticket(TimestampedUUIDBaseModel):
     )
 
     class Meta:
-        unique_together = ("flight", "row", "seat")
+        unique_together = (("flight", "seat"),)
+
+    def clean(self):
+        # Ensure seat belongs to the correct airplane type
+        if self.seat.airplane_type != self.flight.airplane.airplane_type:
+            raise ValidationError("Seat does not match flight airplane type.")
 
     def __str__(self):
-        return f"Ticket {self.id}: {self.flight} Seat {self.row}{self.seat}"
+        return f"Ticket {self.id}: {self.flight} Seat {self.seat.row}{self.seat.seat} ({self.seat.seat_class})"

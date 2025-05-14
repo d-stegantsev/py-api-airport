@@ -1,12 +1,14 @@
 from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from django.db.models import Q, F, CheckConstraint, UniqueConstraint
 
 from base.models import TimestampedUUIDBaseModel
 
 
 class Airport(TimestampedUUIDBaseModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     closest_big_city = models.CharField(max_length=255)
 
     def __str__(self):
@@ -24,16 +26,23 @@ class Route(TimestampedUUIDBaseModel):
         on_delete=models.PROTECT,
         related_name="routes_to"
     )
-    distance = models.PositiveIntegerField()
+    distance = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+
+    class Meta:
+        constraints = [
+            CheckConstraint(check=~Q(source=F('destination')), name='route_source_destination_diff'),
+            CheckConstraint(check=Q(distance__gt=0), name='route_distance_positive'),
+            UniqueConstraint(fields=('source', 'destination'), name='unique_route')
+        ]
 
     def __str__(self):
         return f"{self.source} → {self.destination}"
 
 
 class AirplaneType(TimestampedUUIDBaseModel):
-    name = models.CharField(max_length=100)
-    rows = models.PositiveIntegerField()
-    seats_in_row = models.PositiveIntegerField()
+    name = models.CharField(max_length=100, unique=True)
+    rows = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    seats_in_row = models.PositiveIntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
         return self.name
@@ -76,6 +85,11 @@ class Flight(TimestampedUUIDBaseModel):
         Crew,
         related_name="flights"
     )
+
+    class Meta:
+        constraints = [
+            CheckConstraint(check=Q(departure_time__lt=F('arrival_time')), name='flight_times_order')
+        ]
 
     def __str__(self):
         return f"Flight {self.id} on {self.route}"
@@ -122,6 +136,17 @@ class Seat(models.Model):
     class Meta:
         unique_together = (("airplane_type", "row", "seat"),)
 
+    def clean(self):
+        super().clean()
+        # Ensure row and seat within type limits
+        max_rows = self.airplane_type.rows
+        max_seats = self.airplane_type.seats_in_row
+        if not (1 <= self.row <= max_rows):
+            raise ValidationError(f'Row must be between 1 and {max_rows}.')
+        # Seat letter validation (A, B, ...)
+        if ord(self.seat.upper()) - ord('A') + 1 > max_seats:
+            raise ValidationError(f'Seat letter must be within 1 and {max_seats}.')
+
     def __str__(self):
         return f"{self.airplane_type} row {self.row} seat {self.seat} ({self.seat_class})"
 
@@ -147,6 +172,7 @@ class Ticket(TimestampedUUIDBaseModel):
         unique_together = (("flight", "seat"),)
 
     def clean(self):
+        super().clean()
         # Ensure seat belongs to the correct airplane type
         if self.seat.airplane_type != self.flight.airplane.airplane_type:
             raise ValidationError("Seat does not match flight airplane type.")

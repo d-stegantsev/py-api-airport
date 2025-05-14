@@ -3,7 +3,6 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-
 User = get_user_model()
 
 
@@ -31,9 +30,7 @@ class PasswordConfirmationMixin(serializers.Serializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        password = attrs.get("password")
-        password2 = attrs.get("password2")
-        if (password or password2) and password != password2:
+        if attrs.get("password") != attrs.get("password2"):
             raise serializers.ValidationError({
                 "password": "Error: Passwords don't match.",
                 "password2": "Error: Passwords don't match.",
@@ -58,32 +55,29 @@ class UserCreateSerializer(PasswordConfirmationMixin,
         return User.objects.create_user(**validated_data)
 
 
-class UserUpdateSerializer(PasswordConfirmationMixin,
-                           serializers.ModelSerializer):
+class UserUpdateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
-    password = serializers.CharField(
-        write_only=True,
-        validators=[validate_password],
-        required=False
-    )
-    password2 = serializers.CharField(
-        write_only=True,
-        label="Confirm password",
-        required=False
-    )
 
     class Meta:
         model = User
-        fields = ("email", "password", "password2", "first_name", "last_name", "phone_number", "date_of_birth")
+        fields = ("email", "first_name", "last_name", "phone_number", "date_of_birth")
 
-    def update(self, instance, validated_data):
-        validated_data.pop("password2", None)
-        new_password = validated_data.pop("password", None)
-        if new_password:
-            instance.set_password(new_password)
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    new_password2 = serializers.CharField(write_only=True, label="Confirm new password")
 
-        instance.save()
-        return instance
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
+
+    def validate(self, attrs):
+        if attrs.get("new_password") != attrs.get("new_password2"):
+            raise serializers.ValidationError({
+                "new_password": "Passwords do not match.",
+                "new_password2": "Passwords do not match.",
+            })
+        return attrs

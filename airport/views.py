@@ -1,6 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
 
@@ -15,7 +17,7 @@ from airport.serializers import (
     BaseAirplaneSerializer, AirplaneListSerializer, AirplaneDetailSerializer,
     BaseCrewSerializer, CrewListSerializer, CrewDetailSerializer,
     BaseFlightSerializer, FlightListSerializer, FlightDetailSerializer,
-    BaseOrderSerializer, OrderListSerializer, OrderDetailSerializer,
+    BaseOrderSerializer, OrderListSerializer, OrderCreateSerializer, OrderWithTicketsSerializer,
     BaseSeatClassSerializer, SeatClassListSerializer, SeatClassDetailSerializer,
     BaseSeatSerializer, SeatListSerializer, SeatDetailSerializer,
     BaseTicketSerializer, TicketListSerializer, TicketDetailSerializer,
@@ -23,6 +25,7 @@ from airport.serializers import (
 from base.mixins import BaseViewSetMixin
 
 FILTER_BACKENDS = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+
 
 class AirportViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Airport.objects.all()
@@ -47,6 +50,7 @@ class AirportViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
+
 class RouteViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Route.objects.select_related('source', 'destination').all()
     serializer_class = BaseRouteSerializer
@@ -69,6 +73,7 @@ class RouteViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'partial_update': [IsAdminUser],
         'destroy': [IsAdminUser],
     }
+
 
 class AirplaneTypeViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = AirplaneType.objects.all()
@@ -93,6 +98,7 @@ class AirplaneTypeViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
+
 class AirplaneViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Airplane.objects.select_related('airplane_type').all()
     serializer_class = BaseAirplaneSerializer
@@ -113,6 +119,7 @@ class AirplaneViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
+
 class CrewViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     serializer_class = BaseCrewSerializer
@@ -131,6 +138,7 @@ class CrewViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'partial_update': [IsAdminUser],
         'destroy': [IsAdminUser],
     }
+
 
 class FlightViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Flight.objects.select_related('route', 'airplane').prefetch_related('crew').all()
@@ -156,12 +164,24 @@ class FlightViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
+    @action(detail=True, methods=["get"], url_path="seats/available")
+    def available_seats(self, request, pk=None):
+        flight = self.get_object()
+        booked_ids = Ticket.objects.filter(flight=flight).values_list('seat_id', flat=True)
+        seats = Seat.objects.filter(
+            airplane_type=flight.airplane.airplane_type
+        ).exclude(pk__in=booked_ids)
+        serializer = SeatListSerializer(seats, many=True)
+        return Response(serializer.data)
+
+
 class OrderViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Order.objects.select_related('user').all()
     serializer_class = BaseOrderSerializer
     action_serializers = {
         'list': OrderListSerializer,
-        'retrieve': OrderDetailSerializer,
+        'retrieve': OrderWithTicketsSerializer,
+        'create': OrderCreateSerializer,
     }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {'created_at': ['date', 'gte', 'lte']}
@@ -183,7 +203,8 @@ class OrderViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save()
+
 
 class SeatClassViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = SeatClass.objects.all()
@@ -204,6 +225,7 @@ class SeatClassViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'partial_update': [IsAdminUser],
         'destroy': [IsAdminUser],
     }
+
 
 class SeatViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Seat.objects.select_related('airplane_type', 'seat_class').all()
@@ -228,6 +250,7 @@ class SeatViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'partial_update': [IsAdminUser],
         'destroy': [IsAdminUser],
     }
+
 
 class TicketViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Ticket.objects.select_related(
@@ -255,13 +278,6 @@ class TicketViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'partial_update': [IsAuthenticated],
         'destroy': [IsAuthenticated],
     }
-
-    def get_queryset(self):
-        request_user = self.request.user
-        queryset = self.queryset
-        if not request_user.is_staff:
-            queryset = queryset.filter(order__user=request_user)
-        return queryset
 
     @transaction.atomic
     def perform_create(self, ticket_serializer):

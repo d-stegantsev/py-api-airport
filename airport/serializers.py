@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.db import transaction
 from airport.models import (
     Airport, Route, AirplaneType, Airplane, Crew,
     Flight, Order, SeatClass, Seat, Ticket
@@ -154,6 +155,7 @@ class CrewDetailSerializer(BaseCrewSerializer):
             "id", "first_name", "last_name", "created_at", "updated_at",
         )
 
+
 # Flight serializers
 class BaseFlightSerializer(serializers.ModelSerializer):
     class Meta:
@@ -225,6 +227,62 @@ class OrderDetailSerializer(BaseOrderSerializer):
         fields = (
             "id", "user", "created_at", "updated_at",
         )
+
+# Booking serializers
+class OrderCreateSerializer(serializers.Serializer):
+    flight_id = serializers.IntegerField()
+    seat_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+
+    def validate(self, data):
+        try:
+            flight = Flight.objects.get(pk=data['flight_id'])
+        except Flight.DoesNotExist:
+            raise serializers.ValidationError({"flight_id": "Flight does not exist."})
+        if flight.departure_time <= timezone.now():
+            raise serializers.ValidationError("Cannot book ticket for a flight that has already departed.")
+        seat_ids = data['seat_ids']
+        valid_seat_ids = Seat.objects.filter(
+            airplane_type=flight.airplane.airplane_type,
+            pk__in=seat_ids
+        ).values_list('id', flat=True)
+        if set(seat_ids) != set(valid_seat_ids):
+            raise serializers.ValidationError("One or more seats are invalid for this flight.")
+        booked = Ticket.objects.filter(
+            flight=flight,
+            seat_id__in=seat_ids
+        ).values_list('seat_id', flat=True)
+        if booked:
+            raise serializers.ValidationError({
+                "seat_ids": f"Seats {list(booked)} are already booked."
+            })
+        data['flight'] = flight
+        return data
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        flight = validated_data['flight']
+        seat_ids = validated_data['seat_ids']
+        with transaction.atomic():
+            order = Order.objects.create(user=user, flight=flight)
+            for seat_id in seat_ids:
+                Ticket.objects.create(
+                    order=order,
+                    flight=flight,
+                    seat_id=seat_id
+                )
+        return order
+
+class OrderWithTicketsSerializer(BaseOrderSerializer):
+    tickets = serializers.SerializerMethodField()
+
+    class Meta(BaseOrderSerializer.Meta):
+        fields = (
+            "id", "user", "tickets", "created_at", "updated_at",
+        )
+
+    def get_tickets(self, order_instance):
+        tickets = Ticket.objects.filter(order=order_instance)
+        return TicketListSerializer(tickets, many=True).data
 
 
 # SeatClass serializers

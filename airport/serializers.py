@@ -5,8 +5,8 @@ from airport.models import (
     Flight, Order, SeatClass, Seat, Ticket
 )
 
-
-class AirportSerializer(serializers.ModelSerializer):
+# Airport serializers
+class BaseAirportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airport
         fields = (
@@ -19,8 +19,21 @@ class AirportSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Airport with this name already exists.")
         return value
 
+class AirportListSerializer(BaseAirportSerializer):
+    class Meta(BaseAirportSerializer.Meta):
+        fields = (
+            "id", "name", "closest_big_city",
+        )
 
-class RouteSerializer(serializers.ModelSerializer):
+class AirportDetailSerializer(BaseAirportSerializer):
+    class Meta(BaseAirportSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "name", "closest_big_city",
+        )
+
+
+# Route serializers
+class BaseRouteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Route
         fields = (
@@ -38,8 +51,21 @@ class RouteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Distance must be greater than 0.")
         return value
 
+class RouteListSerializer(BaseRouteSerializer):
+    class Meta(BaseRouteSerializer.Meta):
+        fields = (
+            "id", "source", "destination", "distance",
+        )
 
-class AirplaneTypeSerializer(serializers.ModelSerializer):
+class RouteDetailSerializer(BaseRouteSerializer):
+    class Meta(BaseRouteSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "source", "destination", "distance",
+        )
+
+
+# AirplaneType serializers
+class BaseAirplaneTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AirplaneType
         fields = (
@@ -57,8 +83,21 @@ class AirplaneTypeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Seats in row must be at least 1.")
         return value
 
+class AirplaneTypeListSerializer(BaseAirplaneTypeSerializer):
+    class Meta(BaseAirplaneTypeSerializer.Meta):
+        fields = (
+            "id", "name", "rows", "seats_in_row",
+        )
 
-class AirplaneSerializer(serializers.ModelSerializer):
+class AirplaneTypeDetailSerializer(BaseAirplaneTypeSerializer):
+    class Meta(BaseAirplaneTypeSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "name", "rows", "seats_in_row",
+        )
+
+
+# Airplane serializers
+class BaseAirplaneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airplane
         fields = (
@@ -66,8 +105,21 @@ class AirplaneSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "created_at", "updated_at")
 
+class AirplaneListSerializer(BaseAirplaneSerializer):
+    class Meta(BaseAirplaneSerializer.Meta):
+        fields = (
+            "id", "name", "airplane_type",
+        )
 
-class CrewSerializer(serializers.ModelSerializer):
+class AirplaneDetailSerializer(BaseAirplaneSerializer):
+    class Meta(BaseAirplaneSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "name", "airplane_type",
+        )
+
+
+# Crew serializers
+class BaseCrewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Crew
         fields = (
@@ -75,8 +127,21 @@ class CrewSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "created_at", "updated_at")
 
+class CrewListSerializer(BaseCrewSerializer):
+    class Meta(BaseCrewSerializer.Meta):
+        fields = (
+            "id", "first_name", "last_name",
+        )
 
-class FlightSerializer(serializers.ModelSerializer):
+class CrewDetailSerializer(BaseCrewSerializer):
+    class Meta(BaseCrewSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "first_name", "last_name",
+        )
+
+
+# Flight serializers
+class BaseFlightSerializer(serializers.ModelSerializer):
     class Meta:
         model = Flight
         fields = (
@@ -94,21 +159,48 @@ class FlightSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Departure cannot be in the past.")
         return attrs
 
+class FlightListSerializer(BaseFlightSerializer):
+    class Meta(BaseFlightSerializer.Meta):
+        fields = (
+            "id", "route", "airplane", "departure_time", "arrival_time",
+        )
 
-class OrderSerializer(serializers.ModelSerializer):
+class FlightDetailSerializer(BaseFlightSerializer):
+    class Meta(BaseFlightSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "route", "airplane",
+            "departure_time", "arrival_time", "crew",
+        )
+
+
+# Order serializers
+class BaseOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = (
             "id", "created_at", "updated_at", "user",
         )
-        read_only_fields = ("id", "created_at", "updated_at", "user")
+        read_only_fields = ("id", "created_at", "updated_at")
 
     def create(self, validated_data):
         user = self.context["request"].user
         return Order.objects.create(user=user, **validated_data)
 
+class OrderListSerializer(BaseOrderSerializer):
+    class Meta(BaseOrderSerializer.Meta):
+        fields = (
+            "id", "user",
+        )
 
-class SeatClassSerializer(serializers.ModelSerializer):
+class OrderDetailSerializer(BaseOrderSerializer):
+    class Meta(BaseOrderSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "user",
+        )
+
+
+# SeatClass serializers
+class BaseSeatClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = SeatClass
         fields = (
@@ -122,8 +214,21 @@ class SeatClassSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Seat class name cannot be blank.")
         return name
 
+class SeatClassListSerializer(BaseSeatClassSerializer):
+    class Meta(BaseSeatClassSerializer.Meta):
+        fields = (
+            "id", "name",
+        )
 
-class SeatSerializer(serializers.ModelSerializer):
+class SeatClassDetailSerializer(BaseSeatClassSerializer):
+    class Meta(BaseSeatClassSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "name",
+        )
+
+
+# Seat serializers
+class BaseSeatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Seat
         fields = (
@@ -150,8 +255,21 @@ class SeatSerializer(serializers.ModelSerializer):
                     )
         return attrs
 
+class SeatListSerializer(BaseSeatSerializer):
+    class Meta(BaseSeatSerializer.Meta):
+        fields = (
+            "id", "airplane_type", "row", "seat",
+        )
 
-class TicketSerializer(serializers.ModelSerializer):
+class SeatDetailSerializer(BaseSeatSerializer):
+    class Meta(BaseSeatSerializer.Meta):
+        fields = (
+            "id", "airplane_type", "row", "seat", "seat_class",
+        )
+
+
+# Ticket serializers
+class BaseTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = (
@@ -176,3 +294,15 @@ class TicketSerializer(serializers.ModelSerializer):
                     "Cannot book ticket for a flight that has already departed."
                 )
         return attrs
+
+class TicketListSerializer(BaseTicketSerializer):
+    class Meta(BaseTicketSerializer.Meta):
+        fields = (
+            "id", "flight", "seat",
+        )
+
+class TicketDetailSerializer(BaseTicketSerializer):
+    class Meta(BaseTicketSerializer.Meta):
+        fields = (
+            "id", "created_at", "updated_at", "flight", "seat", "order",
+        )

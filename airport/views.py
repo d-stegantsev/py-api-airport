@@ -9,9 +9,16 @@ from airport.models import (
     Flight, Order, SeatClass, Seat, Ticket
 )
 from airport.serializers import (
-    AirportSerializer, RouteSerializer, AirplaneTypeSerializer,
-    AirplaneSerializer, CrewSerializer, FlightSerializer,
-    OrderSerializer, SeatClassSerializer, SeatSerializer, TicketSerializer
+    BaseAirportSerializer, AirportListSerializer, AirportDetailSerializer,
+    BaseRouteSerializer, RouteListSerializer, RouteDetailSerializer,
+    BaseAirplaneTypeSerializer, AirplaneTypeListSerializer, AirplaneTypeDetailSerializer,
+    BaseAirplaneSerializer, AirplaneListSerializer, AirplaneDetailSerializer,
+    BaseCrewSerializer, CrewListSerializer, CrewDetailSerializer,
+    BaseFlightSerializer, FlightListSerializer, FlightDetailSerializer,
+    BaseOrderSerializer, OrderListSerializer, OrderDetailSerializer,
+    BaseSeatClassSerializer, SeatClassListSerializer, SeatClassDetailSerializer,
+    BaseSeatSerializer, SeatListSerializer, SeatDetailSerializer,
+    BaseTicketSerializer, TicketListSerializer, TicketDetailSerializer,
 )
 from base.mixins import BaseViewSetMixin
 
@@ -19,7 +26,11 @@ FILTER_BACKENDS = [DjangoFilterBackend, SearchFilter, OrderingFilter]
 
 class AirportViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Airport.objects.all()
-    serializer_class = AirportSerializer
+    serializer_class = BaseAirportSerializer
+    action_serializers = {
+        'list': AirportListSerializer,
+        'retrieve': AirportDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {
         'name': ['exact', 'icontains'],
@@ -38,7 +49,11 @@ class AirportViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class RouteViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Route.objects.select_related('source', 'destination').all()
-    serializer_class = RouteSerializer
+    serializer_class = BaseRouteSerializer
+    action_serializers = {
+        'list': RouteListSerializer,
+        'retrieve': RouteDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {
         'source': ['exact'],
@@ -57,7 +72,11 @@ class RouteViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class AirplaneTypeViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = AirplaneType.objects.all()
-    serializer_class = AirplaneTypeSerializer
+    serializer_class = BaseAirplaneTypeSerializer
+    action_serializers = {
+        'list': AirplaneTypeListSerializer,
+        'retrieve': AirplaneTypeDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {
         'rows': ['gte', 'lte'],
@@ -76,7 +95,11 @@ class AirplaneTypeViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class AirplaneViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Airplane.objects.select_related('airplane_type').all()
-    serializer_class = AirplaneSerializer
+    serializer_class = BaseAirplaneSerializer
+    action_serializers = {
+        'list': AirplaneListSerializer,
+        'retrieve': AirplaneDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {'airplane_type': ['exact']}
     search_fields = ['name']
@@ -92,7 +115,11 @@ class AirplaneViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class CrewViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Crew.objects.all()
-    serializer_class = CrewSerializer
+    serializer_class = BaseCrewSerializer
+    action_serializers = {
+        'list': CrewListSerializer,
+        'retrieve': CrewDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     search_fields = ['first_name', 'last_name']
     ordering_fields = ['last_name']
@@ -107,7 +134,11 @@ class CrewViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class FlightViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Flight.objects.select_related('route', 'airplane').prefetch_related('crew').all()
-    serializer_class = FlightSerializer
+    serializer_class = BaseFlightSerializer
+    action_serializers = {
+        'list': FlightListSerializer,
+        'retrieve': FlightDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {
         'route': ['exact'],
@@ -127,7 +158,11 @@ class FlightViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class OrderViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Order.objects.select_related('user').all()
-    serializer_class = OrderSerializer
+    serializer_class = BaseOrderSerializer
+    action_serializers = {
+        'list': OrderListSerializer,
+        'retrieve': OrderDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {'created_at': ['date', 'gte', 'lte']}
     ordering_fields = ['created_at']
@@ -152,7 +187,11 @@ class OrderViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class SeatClassViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = SeatClass.objects.all()
-    serializer_class = SeatClassSerializer
+    serializer_class = BaseSeatClassSerializer
+    action_serializers = {
+        'list': SeatClassListSerializer,
+        'retrieve': SeatClassDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {'name': ['exact', 'icontains']}
     search_fields = ['name']
@@ -168,7 +207,11 @@ class SeatClassViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
 
 class SeatViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     queryset = Seat.objects.select_related('airplane_type', 'seat_class').all()
-    serializer_class = SeatSerializer
+    serializer_class = BaseSeatSerializer
+    action_serializers = {
+        'list': SeatListSerializer,
+        'retrieve': SeatDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {
         'airplane_type': ['exact'],
@@ -192,7 +235,11 @@ class TicketViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'seat__airplane_type', 'seat__seat_class',
         'flight__route', 'flight__airplane'
     ).all()
-    serializer_class = TicketSerializer
+    serializer_class = BaseTicketSerializer
+    action_serializers = {
+        'list': TicketListSerializer,
+        'retrieve': TicketDetailSerializer,
+    }
     filter_backends = FILTER_BACKENDS
     filterset_fields = {
         'flight': ['exact'],

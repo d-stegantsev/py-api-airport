@@ -116,7 +116,7 @@ class SeatClass(TimestampedUUIDBaseModel):
         return self.name
 
 
-class Seat(models.Model):
+class Seat(TimestampedUUIDBaseModel):
     """
     Defines a seat template for each AirplaneType.
     """
@@ -138,12 +138,10 @@ class Seat(models.Model):
 
     def clean(self):
         super().clean()
-        # Ensure row and seat within type limits
         max_rows = self.airplane_type.rows
         max_seats = self.airplane_type.seats_in_row
         if not (1 <= self.row <= max_rows):
             raise ValidationError(f'Row must be between 1 and {max_rows}.')
-        # Seat letter validation (A, B, ...)
         if ord(self.seat.upper()) - ord('A') + 1 > max_seats:
             raise ValidationError(f'Seat letter must be within 1 and {max_seats}.')
 
@@ -173,7 +171,6 @@ class Ticket(TimestampedUUIDBaseModel):
 
     def clean(self):
         super().clean()
-        # Ensure seat belongs to the correct airplane type
         if self.seat.airplane_type != self.flight.airplane.airplane_type:
             raise ValidationError("Seat does not match flight airplane type.")
 

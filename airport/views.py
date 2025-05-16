@@ -17,10 +17,10 @@ from airport.serializers import (
     BaseAirplaneSerializer, AirplaneListSerializer, AirplaneDetailSerializer,
     BaseCrewSerializer, CrewListSerializer, CrewDetailSerializer,
     BaseFlightSerializer, FlightListSerializer, FlightDetailSerializer,
-    BaseOrderSerializer, OrderListSerializer, OrderCreateSerializer, OrderWithTicketsSerializer,
+    BaseOrderSerializer, OrderListSerializer, OrderCreateSerializer,
     BaseSeatClassSerializer, SeatClassListSerializer, SeatClassDetailSerializer,
     BaseSeatSerializer, SeatListSerializer, SeatDetailSerializer,
-    BaseTicketSerializer, TicketListSerializer, TicketDetailSerializer,
+    BaseTicketSerializer, TicketListSerializer, TicketDetailSerializer, OrderDetailSerializer,
 )
 from base.mixins import BaseViewSetMixin
 
@@ -180,7 +180,7 @@ class OrderViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
     serializer_class = BaseOrderSerializer
     action_serializers = {
         'list': OrderListSerializer,
-        'retrieve': OrderWithTicketsSerializer,
+        'retrieve': OrderDetailSerializer,
         'create': OrderCreateSerializer,
     }
     filter_backends = FILTER_BACKENDS

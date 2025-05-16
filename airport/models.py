@@ -1,8 +1,12 @@
+import pathlib
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db.models import Q, F, CheckConstraint, UniqueConstraint
+from django.utils.text import slugify
 
 from base.models import TimestampedUUIDBaseModel
 
@@ -48,6 +52,12 @@ class AirplaneType(TimestampedUUIDBaseModel):
         return self.name
 
 
+def airplane_image_path(instance, filename):
+    ext = pathlib.Path(filename).suffix
+    filename = f"{slugify(instance.name)}-{uuid.uuid4()}{ext}"
+    return pathlib.Path("uploads/airplanes") / filename
+
+
 class Airplane(TimestampedUUIDBaseModel):
     name = models.CharField(max_length=100)
     airplane_type = models.ForeignKey(
@@ -55,6 +65,7 @@ class Airplane(TimestampedUUIDBaseModel):
         on_delete=models.PROTECT,
         related_name="airplanes"
     )
+    image = models.ImageField(null=True, blank=True, upload_to=airplane_image_path)
 
     def __str__(self):
         return self.name

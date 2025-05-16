@@ -104,11 +104,19 @@ class AirplaneTypeDetailSerializer(BaseAirplaneTypeSerializer):
 
 
 # Airplane serializers
+class AirplaneImageUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Airplane
+        fields = ["image"]
+
+
 class BaseAirplaneSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(read_only=True)
+
     class Meta:
         model = Airplane
         fields = (
-            "id", "name", "airplane_type", "created_at", "updated_at",
+            "id", "name", "image", "airplane_type", "created_at", "updated_at",
         )
         read_only_fields = ("id", "created_at", "updated_at")
 
@@ -117,7 +125,7 @@ class AirplaneListSerializer(BaseAirplaneSerializer):
 
     class Meta(BaseAirplaneSerializer.Meta):
         fields = (
-            "id", "name", "airplane_type",
+            "id", "name", "image", "airplane_type",
         )
 
 class AirplaneDetailSerializer(BaseAirplaneSerializer):
@@ -125,7 +133,7 @@ class AirplaneDetailSerializer(BaseAirplaneSerializer):
 
     class Meta(BaseAirplaneSerializer.Meta):
         fields = (
-            "id", "name", "airplane_type", "created_at", "updated_at",
+            "id", "name", "image", "airplane_type", "created_at", "updated_at",
         )
 
 

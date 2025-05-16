@@ -21,6 +21,7 @@ from airport.serializers import (
     BaseSeatClassSerializer, SeatClassListSerializer, SeatClassDetailSerializer,
     BaseSeatSerializer, SeatListSerializer, SeatDetailSerializer,
     BaseTicketSerializer, TicketListSerializer, TicketDetailSerializer, OrderDetailSerializer,
+    AirplaneImageUploadSerializer,
 )
 from base.mixins import BaseViewSetMixin
 
@@ -118,6 +119,20 @@ class AirplaneViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'partial_update': [IsAdminUser],
         'destroy': [IsAdminUser],
     }
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        permission_classes=[IsAdminUser],
+        url_path="upload-image",
+        serializer_class=AirplaneImageUploadSerializer,
+    )
+    def upload_image(self, request, pk=None):
+        airplane = self.get_object()
+        serializer = self.get_serializer(airplane, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CrewViewSet(BaseViewSetMixin, viewsets.ModelViewSet):

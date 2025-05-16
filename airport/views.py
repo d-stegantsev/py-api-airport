@@ -171,6 +171,8 @@ class FlightViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         seats = Seat.objects.filter(
             airplane_type=flight.airplane.airplane_type
         ).exclude(pk__in=booked_ids)
+        if not seats.exists():
+            return Response({"detail": "No seats available"}, status=200)
         serializer = SeatListSerializer(seats, many=True)
         return Response(serializer.data)
 

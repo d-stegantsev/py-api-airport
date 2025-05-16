@@ -12,7 +12,7 @@ from accounts.serializers import (
     UserCreateSerializer,
     UserSerializer,
     UserUpdateSerializer,
-    ChangePasswordSerializer,
+    ChangePasswordSerializer, AdminRightsSerializer,
 )
 from accounts.throttles import TokenRateThrottle, SignupRateThrottle
 from base.mixins import BaseViewSetMixin
@@ -52,6 +52,7 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
         "signup": UserCreateSerializer,
         "me": UserUpdateSerializer,
         "password": ChangePasswordSerializer,
+        "admin_rights": AdminRightsSerializer,
     }
     action_permissions = {
         "create": [IsAdminUser],
@@ -63,6 +64,7 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
         "signup": [AllowAny],
         "me": [IsAuthenticated],
         "password": [IsAuthenticated],
+        "admin_rights": [IsAdminUser],
     }
 
     @extend_schema(
@@ -107,3 +109,23 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
         request.user.set_password(serializer.validated_data["new_password"])
         request.user.save()
         return Response({"detail": "Password updated successfully"}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Update admin rights",
+        description="Set or remove admin rights for a user (is_staff, is_superuser). Admin only.",
+        request=AdminRightsSerializer,
+        responses={200: AdminRightsSerializer}
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="set-admin",
+        serializer_class=AdminRightsSerializer,
+        permission_classes=[IsAdminUser]
+    )
+    def set_admin(self, request, pk=None):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "User admin rights updated.", "user": serializer.data}, status=status.HTTP_200_OK)

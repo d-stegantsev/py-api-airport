@@ -83,13 +83,14 @@ class UserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'phone_number', 'date_of_birth')
+        fields = ('id', 'email', 'first_name', 'last_name', 'phone_number', 'date_of_birth', 'is_staff')
         extra_kwargs = {
             'email': {'help_text': "User's unique email address."},
             'first_name': {'help_text': 'First name.'},
             'last_name': {'help_text': 'Last name.'},
             'phone_number': {'help_text': 'Mobile phone number.'},
             'date_of_birth': {'help_text': 'Date of birth (YYYY-MM-DD).'},
+            'is_staff': {'help_text': 'Is staff user.'},
         }
 
 
@@ -191,3 +192,12 @@ class ChangePasswordSerializer(serializers.Serializer):
                 'new_password2': 'Passwords do not match.',
             })
         return attrs
+
+
+class AdminRightsSerializer(serializers.ModelSerializer):
+    is_staff = serializers.BooleanField(required=True)
+    is_superuser = serializers.BooleanField(required=False)
+
+    class Meta:
+        model = User
+        fields = ("is_staff", "is_superuser")

@@ -339,7 +339,7 @@ class OrderListSerializer(BaseOrderSerializer):
 
 
 class OrderDetailSerializer(BaseOrderSerializer):
-    tickets = TicketListSerializer(many=True, read_only=True, source="tickets")
+    tickets = TicketListSerializer(many=True, read_only=True)
 
     class Meta(BaseOrderSerializer.Meta):
         fields = ("id", "user", "tickets", "created_at", "updated_at")

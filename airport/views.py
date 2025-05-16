@@ -192,8 +192,8 @@ class OrderViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'list': [IsAuthenticated],
         'retrieve': [IsAuthenticated],
         'create': [IsAuthenticated],
-        'update': [IsAuthenticated],
-        'partial_update': [IsAuthenticated],
+        'update': [IsAdminUser],
+        'partial_update': [IsAdminUser],
         'destroy': [IsAuthenticated],
     }
 
@@ -281,8 +281,8 @@ class TicketViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'list': [IsAuthenticated],
         'retrieve': [IsAuthenticated],
         'create': [IsAuthenticated],
-        'update': [IsAuthenticated],
-        'partial_update': [IsAuthenticated],
+        'update': [IsAdminUser],
+        'partial_update': [IsAdminUser],
         'destroy': [IsAuthenticated],
     }
 

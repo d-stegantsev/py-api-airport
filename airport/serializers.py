@@ -305,16 +305,40 @@ class BaseTicketSerializer(serializers.ModelSerializer):
         return attrs
 
 class TicketListSerializer(BaseTicketSerializer):
+    flight = serializers.SerializerMethodField()
+    seat = serializers.SerializerMethodField()
+
     class Meta(BaseTicketSerializer.Meta):
         fields = (
             "id", "flight", "seat",
         )
 
+    def get_flight(self, ticket):
+        flight = ticket.flight
+        src = flight.route.source
+        dst = flight.route.destination
+        return f"{src.name} ({src.closest_big_city}) - {dst.name} ({dst.closest_big_city})"
+
+    def get_seat(self, ticket):
+        return f"Row {ticket.seat.row}, Seat {ticket.seat.seat}"
+
 class TicketDetailSerializer(BaseTicketSerializer):
+    flight = serializers.SerializerMethodField()
+    seat = serializers.SerializerMethodField()
+
     class Meta(BaseTicketSerializer.Meta):
         fields = (
             "id", "flight", "seat", "order", "created_at", "updated_at",
         )
+
+    def get_flight(self, ticket):
+        flight = ticket.flight
+        src = flight.route.source
+        dst = flight.route.destination
+        return f"{src.name} ({src.closest_big_city}) - {dst.name} ({dst.closest_big_city})"
+
+    def get_seat(self, ticket):
+        return f"Row {ticket.seat.row}, Seat {ticket.seat.seat}"
 
 
 # Order serializers
@@ -332,6 +356,7 @@ class BaseOrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(BaseOrderSerializer):
+    user = serializers.EmailField(source="user.email", read_only=True)
     class Meta(BaseOrderSerializer.Meta):
         fields = (
             "id", "user",
@@ -339,10 +364,27 @@ class OrderListSerializer(BaseOrderSerializer):
 
 
 class OrderDetailSerializer(BaseOrderSerializer):
-    tickets = TicketListSerializer(many=True, read_only=True)
+    user = serializers.EmailField(source="user.email", read_only=True)
+    flight = serializers.SerializerMethodField()
+    seats = serializers.SerializerMethodField()
 
     class Meta(BaseOrderSerializer.Meta):
-        fields = ("id", "user", "tickets", "created_at", "updated_at")
+        fields = ("id", "user", "flight", "seats", "created_at", "updated_at")
+
+    def get_flight(self, order):
+        ticket = order.tickets.first()
+        if not ticket:
+            return None
+        flight = ticket.flight
+        src = flight.route.source
+        dst = flight.route.destination
+        return f"{src.name} ({src.closest_big_city}) - {dst.name} ({dst.closest_big_city})"
+
+    def get_seats(self, order):
+        return [
+            f"Row {ticket.seat.row}, Seat {ticket.seat.seat}"
+            for ticket in order.tickets.all()
+        ]
 
 
 # Booking serializers

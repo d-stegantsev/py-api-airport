@@ -29,6 +29,7 @@ from base.mixins import BaseViewSetMixin
 FILTER_BACKENDS = [DjangoFilterBackend, SearchFilter, OrderingFilter]
 
 
+# AirportViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all airports",
@@ -91,8 +92,8 @@ class AirportViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
-# --- ROUTE ---
 
+# RouteViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all routes",
@@ -151,8 +152,8 @@ class RouteViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
-# --- AIRPLANE TYPE ---
 
+# AirplaneTypeViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all airplane types",
@@ -211,8 +212,8 @@ class AirplaneTypeViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
-# --- AIRPLANE ---
 
+# AirplaneViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all airplanes",
@@ -288,8 +289,8 @@ class AirplaneViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-# --- CREW ---
 
+# CrewViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all crew members",
@@ -344,8 +345,8 @@ class CrewViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
-# --- FLIGHT ---
 
+# FlightViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all flights",
@@ -423,8 +424,8 @@ class FlightViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-# --- ORDER ---
 
+# OrderViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all orders (user only)",
@@ -495,8 +496,8 @@ class OrderViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         headers = self.get_success_headers(output_serializer.data)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-# --- SEAT CLASS ---
 
+# SeatClassViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all seat classes",
@@ -552,8 +553,8 @@ class SeatClassViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
-# --- SEAT ---
 
+# SeatViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all seats",
@@ -613,8 +614,8 @@ class SeatViewSet(BaseViewSetMixin, viewsets.ModelViewSet):
         'destroy': [IsAdminUser],
     }
 
-# --- TICKET ---
 
+# TicketViewSet
 @extend_schema_view(
     list=extend_schema(
         summary="List all tickets (user only)",

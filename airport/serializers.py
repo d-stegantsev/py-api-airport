@@ -107,7 +107,7 @@ class AirplaneTypeDetailSerializer(BaseAirplaneTypeSerializer):
 class AirplaneImageUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airplane
-        fields = ["image"]
+        fields = ("image",)
 
 
 class BaseAirplaneSerializer(serializers.ModelSerializer):

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -152,6 +153,12 @@ REST_FRAMEWORK = {
         "token_obtain": "10/minute",
     }
 }
+
+if "test" in sys.argv or "pytest" in sys.argv[0]:
+    REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
+        "signup": None,
+        "token_obtain": None,
+    }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=500),

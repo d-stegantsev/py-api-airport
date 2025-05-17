@@ -7,7 +7,7 @@ from drf_spectacular.views import SpectacularSwaggerView, SpectacularRedocView, 
 
 api_v1_patterns = [
     path("airport/", include("airport.urls")),
-    path("accounts/", include("accounts.urls")),
+    path("accounts/", include("accounts.urls", namespace="accounts")),
 
 # Schema & Docs
     path("schema/", SpectacularAPIView.as_view(api_version="v1"), name="schema"),

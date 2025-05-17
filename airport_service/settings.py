@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+
 import os
 import sys
 from datetime import timedelta
@@ -22,7 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "FmNj7P40-Mgrv0gsc1aLHfOoxG_6pAeEYRweRYSBLObbHks76e0wsEZ20XnH0hPHuEg")
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "FmNj7P40-Mgrv0gsc1aLHfOoxG_6pAeEYRweRYSBLObbHks76e0wsEZ20XnH0hPHuEg",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -35,53 +39,53 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-# third-party
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
     "debug_toolbar",
     "phonenumber_field",
     "django_filters",
-# local
+    # local
     "accounts",
     "airport",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
+    "django.middleware.security.SecurityMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'airport_service.urls'
+ROOT_URLCONF = "airport_service.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'airport_service.wsgi.application'
+WSGI_APPLICATION = "airport_service.wsgi.application"
 
 if os.environ.get("IN_DOCKER", False):
     DATABASES = {
@@ -100,7 +104,7 @@ if os.environ.get("IN_DOCKER", False):
             "LOCATION": f"redis://{os.environ['REDIS_HOST']}:6379/1",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            }
+            },
         }
     }
 else:
@@ -117,16 +121,16 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -134,9 +138,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'Europe/Kyiv'
+TIME_ZONE = "Europe/Kyiv"
 
 USE_I18N = True
 
@@ -153,7 +157,7 @@ ALLOWED_HOSTS = ["*"]
 
 AUTH_USER_MODEL = "accounts.User"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
@@ -171,7 +175,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "signup": "5/hour",
         "token_obtain": "10/minute",
-    }
+    },
 }
 
 if "test" in sys.argv or "pytest" in sys.argv[0]:

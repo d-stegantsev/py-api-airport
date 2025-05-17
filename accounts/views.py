@@ -12,7 +12,8 @@ from accounts.serializers import (
     UserCreateSerializer,
     UserSerializer,
     UserUpdateSerializer,
-    ChangePasswordSerializer, AdminRightsSerializer,
+    ChangePasswordSerializer,
+    AdminRightsSerializer,
 )
 from accounts.throttles import TokenRateThrottle, SignupRateThrottle
 from base.mixins import BaseViewSetMixin
@@ -30,6 +31,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
     """
     Endpoint for user authentication and JWT token generation.
     """
+
     serializer_class = EmailTokenObtainPairSerializer
     permission_classes = (AllowAny,)
     throttle_classes = [TokenRateThrottle]
@@ -39,6 +41,7 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
     """
     A viewset for user account management, including signup, profile retrieval/update, and password change.
     """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
@@ -78,7 +81,9 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
         if request.method == "GET":
             serializer = UserSerializer(request.user)
         else:
-            serializer = self.get_serializer(request.user, data=request.data, partial=True)
+            serializer = self.get_serializer(
+                request.user, data=request.data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
         return Response(serializer.data)
@@ -93,7 +98,7 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
     def signup(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
@@ -104,28 +109,36 @@ class UserViewSet(BaseViewSetMixin, ModelViewSet):
     )
     @action(detail=False, methods=["post"], url_path="password")
     def password(self, request):
-        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer = self.get_serializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         request.user.set_password(serializer.validated_data["new_password"])
         request.user.save()
-        return Response({"detail": "Password updated successfully"}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Password updated successfully"},
+            status=status.HTTP_200_OK
+        )
 
     @extend_schema(
         summary="Update admin rights",
         description="Set or remove admin rights for a user (is_staff, is_superuser). Admin only.",
         request=AdminRightsSerializer,
-        responses={200: AdminRightsSerializer}
+        responses={200: AdminRightsSerializer},
     )
     @action(
         detail=True,
         methods=["post"],
         url_path="set-admin",
         serializer_class=AdminRightsSerializer,
-        permission_classes=[IsAdminUser]
+        permission_classes=[IsAdminUser],
     )
     def set_admin(self, request, pk=None):
         user = self.get_object()
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"detail": "User admin rights updated.", "user": serializer.data}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "User admin rights updated.", "user": serializer.data},
+            status=status.HTTP_200_OK,
+        )

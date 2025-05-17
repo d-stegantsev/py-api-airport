@@ -3,13 +3,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from drf_spectacular.views import SpectacularSwaggerView, SpectacularRedocView, SpectacularAPIView
+from drf_spectacular.views import (
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+    SpectacularAPIView,
+)
 
 api_v1_patterns = [
     path("airport/", include("airport.urls")),
     path("accounts/", include("accounts.urls", namespace="accounts")),
-
-# Schema & Docs
+    # Schema & Docs
     path("schema/", SpectacularAPIView.as_view(api_version="v1"), name="schema"),
     path(
         "docs/swagger/",
@@ -22,7 +25,7 @@ api_v1_patterns = [
 ]
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
     path("api/v1/", include((api_v1_patterns, "v1"), namespace="v1")),
 ]
 

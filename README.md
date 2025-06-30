@@ -2,6 +2,32 @@
 
 API service for airport management written with Django REST Framework
 
+**Features Overview:**
+
+**User Management & Authentication:**
+- Registration and login via email and password, using secure JWT tokens.
+- Users can update their profile and securely change their password.
+- User roles are enforced: only admins have access to sensitive operations.
+- Admins can grant or revoke admin rights for other users through a dedicated endpoint.
+- Rate limiting is enabled for signup and authentication actions to protect against abuse.
+
+**Custom Booking Logic:**
+- Users can book one or more seats on a selected flight in a single order.
+- The system automatically checks seat availability, prevents double booking, and ensures seats match the airplane’s configuration.
+- Only valid and available seats can be booked; flights in the past cannot be booked.
+- Users can view their own bookings and tickets; admins have access to all data.
+
+**Advanced Flight Management:**
+- Admins manage all entities, including assigning airplanes, crews, and seat configurations.
+- Dedicated endpoint for retrieving available seats for any flight.
+- Airplane images can be uploaded or updated by admins.
+
+**Security & Validation:**
+- All input is validated for consistency and integrity (e.g., no double bookings, seat constraints, etc).
+- Comprehensive permission checks: regular users can manage only their data, admins can manage the whole database.
+
+dbdiagram.io/ link >>> https://dbdiagram.io/d/api-airport-6828b9091227bdcb4ec2dfd9
+
 ---
 
 ## Installation (Local)
